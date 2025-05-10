@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bn7a8mpmmsn1t"]
+
+[ext_resource type="Script" uid="uid://cnkldxy14cmfq" path="res://TestFmod.cs" id="1_77f68"]
+
+[node name="Fmod" type="Node"]
+script = ExtResource("1_77f68")
