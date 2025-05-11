@@ -2,16 +2,21 @@
 
 FmodSharp is a C# integration for FMOD in Godot
 
-Add this to your .csproj
-```
+> **Disclaimer:**  
+> This is an early proof of concept. Currently, it supports only a single bank and does not include custom nodes for event playback. Everything is managed through code for now. Future updates will include multi-bank support, custom nodes, debug tooling, custom property drawers, and more.
+
+## Installation
+
+To get started, you need to add the FMOD DLLs to your project. Add the following configuration to your `.csproj` file:
+
+```xml
 <ItemGroup>
     <Content Include="addons\fmodsharp\**\*.dll">
       <Link>%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>%(Filename)%(Extension)</TargetPath>
     </Content>
-  </ItemGroup>
-```
+</ItemGroup>
 
 In FMOD, you must select the build path to a desired path inside Godot. I recommend that you use the Build folder inside of `addons/fmodsharp/Build`
 
