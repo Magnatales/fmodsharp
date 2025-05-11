@@ -2,12 +2,18 @@
 
 FmodSharp is a C# integration for FMOD in Godot
 
-> **Disclaimer:**  
-> This is an early proof of concept. Currently, it supports only a single bank and does not include custom nodes for event playback. Everything is managed through code for now. Future updates will include multi-bank support, custom nodes, debug tooling, custom property drawers, and more.
+## Known Issues
+
+| Issue                  | Description                                           | Workaround  |
+|------------------------|-------------------------------------------------------|-------------|
+| Single bank only        | Currently only supports one FMOD bank.                | Give me some time.    |
+| No custom nodes         | Custom nodes for events are not yet implemented.      | Use code for triggering events. |
+
+---
 
 ## Installation
 
-To get started, you need to add the FMOD DLLs to your project. Add the following configuration to your `.csproj` file:
+Add the following configuration to your `.csproj` file:
 
 ```xml
 <ItemGroup>
@@ -17,10 +23,9 @@ To get started, you need to add the FMOD DLLs to your project. Add the following
       <TargetPath>%(Filename)%(Extension)</TargetPath>
     </Content>
 </ItemGroup>
+```
 
 In FMOD, you must select the build path to a desired path inside Godot. I recommend that you use the Build folder inside of `addons/fmodsharp/Build`
-
-![image](https://github.com/user-attachments/assets/7ccab10a-8ad7-4a17-8bc2-6c828df045be)
 
 ![image](https://github.com/user-attachments/assets/1337d7cf-517d-48b6-9227-83c005ec7a22)
 
@@ -28,72 +33,28 @@ Once you build your banks in FMOD, in Godot, use the FMODSharp panel window at t
 
 ![image](https://github.com/user-attachments/assets/2d3e2517-f4c4-4851-89a3-3386357c0198)
 
-
-
-Lately, in code:
-1. Call FmodServer.Initialize()
-2. Call FmodServer.Update() in your _Process(double delta)
-3. Enjoy!
-
 # FmodServer Class Documentation
 
 ## Overview
 The `FmodServer` class provides methods to initialize, update, and control FMOD events and audio systems in a Godot game. It manages the loading of audio banks, playing events, adjusting bus volumes, and handling background music (BGM). The class is used to interface with FMOD's audio engine to handle dynamic sound and music within the game.
 
-## Methods
+| Method | Description | Example |
+|--------|-------------|---------|
+| `Initialize()` | Initializes the FMOD system, loads the bank, and prepares everything for use. | `FmodServer.Initialize();` |
+| `Update()` | Updates the FMOD system, typically called every frame. Use it in your _Process method. | `FmodServer.Update();` |
+| `Dispose()` | Shuts down the FMOD system and releases all resources. Call this before exiting the game. | `FmodServer.Dispose();` |
+| `Play(Guid guid)` | Plays a sound event specified by its unique GUID. | `FmodServer.Play(new Guid("your-guid-here"));` |
+| `Play(string path)` | Plays a sound event by its path. | `FmodServer.Play("event:/sound_effect");` |
+| `PlayBgm(Guid guid, STOP_MODE stopMode)` | Plays a background music event by its GUID, with stop mode. | `FmodServer.PlayBgm(new Guid("your-guid-here"), STOP_MODE.ALLOWFADEOUT);` |
+| `PlayBgm(string path, STOP_MODE stopMode)` | Plays a background music event by path, with stop mode. | `FmodServer.PlayBgm("event:/bgm_sound", STOP_MODE.ALLOWFADEOUT);` |
+| `SetBusVolume(string path, float volume)` | Sets volume of a bus by path. | `FmodServer.SetBusVolume("bus:/bgm", 0.5f);` |
+| `SetBusVolume(Guid guid, float volume)` | Sets volume of a bus by GUID. | `FmodServer.SetBusVolume(new Guid("your-guid-here"), 0.5f);` |
+| `MuteBus(string path, bool mute)` | Mutes/unmutes a bus by path. | `FmodServer.MuteBus("bus:/bgm", true);` |
+| `MuteBus(Guid guid, bool mute)` | Mutes/unmutes a bus by GUID. | `FmodServer.MuteBus(new Guid("your-guid-here"), true);` |
+| `SetParameter(instance, paramName, value)` | Sets a parameter on an event instance. | `FmodServer.SetParameter(eventInstance, "volume", 0.5f);` |
+| `CreateInstance(string path)` | Creates an instance of an FMOD event by path. | `var instance = FmodServer.CreateInstance("event:/sound_effect");` |
+| `CreateInstance(Guid guid)` | Creates an instance of an FMOD event by GUID. | `var instance = FmodServer.CreateInstance(new Guid("your-guid-here"));` |
+| `GetEvent(string path)` | Retrieves an event description by path. | `var e = FmodServer.GetEvent("event:/sound_effect");` |
+| `GetAllEvents()` | Retrieves all events from the loaded bank. | `var all = FmodServer.GetAllEvents();` |
+| `SetCallback(instance, callback, type)` | Sets a callback on an event instance. | `FmodServer.SetCallback(instance, callback, EVENT_CALLBACK_TYPE.START);` |
 
-### `Initialize()`
-Initializes the FMOD system and loads the necessary audio banks. Should be called once at the start of the game.
-
-### `Update()`
-Updates the FMOD system. This method should be called in the `_Process` function of the game loop to ensure FMOD events are updated each frame.
-
-### `Play(Guid guid)`
-Plays an event using the provided unique identifier.
-
-### `PlayBgm(Guid guid, STOP_MODE stopMode = STOP_MODE.ALLOWFADEOUT)`
-Plays background music (BGM) using a unique event identifier. If a BGM is already playing, it will be stopped and replaced.
-
-### `PlayBgm(string path, STOP_MODE stopMode = STOP_MODE.ALLOWFADEOUT)`
-Plays background music (BGM) using the event path. If a BGM is already playing, it will be stopped and replaced.
-
-### `Play(string path)`
-Plays an event using the provided path.
-
-### `SetBusVolume(string path, float volume)`
-Sets the volume of a specific FMOD bus using the event path.
-
-### `SetBusVolume(Guid guid, float volume)`
-Sets the volume of a specific FMOD bus using the event's unique identifier.
-
-### `MuteBus(string path, bool mute)`
-Mutes or unmutes a specific FMOD bus using the event path.
-
-### `MuteBus(Guid guid, bool mute)`
-Mutes or unmutes a specific FMOD bus using the event's unique identifier.
-
-### `SetParameter(EventInstance instance, string paramName, float value)`
-Sets a parameter for an event instance.
-
-### `CreateInstance(string path)`
-Creates a new instance of an event using the event path.
-
-### `CreateInstance(Guid guid)`
-Creates a new instance of an event using the event's unique identifier.
-
-### `GetEvent(string path)`
-Retrieves an event description by its path.
-
-### `GetAllEvents()`
-Retrieves all event descriptions loaded in the system.
-
-### `SetCallback(EventInstance instance, EVENT_CALLBACK callback, EVENT_CALLBACK_TYPE type)`
-Sets a callback for an event instance.
-
-### `Dispose()`
-Releases all FMOD resources and stops any playing events.
-
-## Properties
-
-### `IsInitialized`
-A boolean property indicating whether the FMOD system has been successfully
