@@ -4,14 +4,10 @@
 
 [resource]
 script = ExtResource("1_idxcg")
-BankFolderPath = "res://addons/fmodsharp/Build/Desktop"
-BankPath = "res://addons/fmodsharp/Build/Desktop/Master.bank"
-StringsBankPath = "res://addons/fmodsharp/Build/Desktop/Master.strings.bank"
-BankRelativePath = "Master.bank"
-StringsBankRelativePath = "Master.strings.bank"
-BankEvents = Dictionary[String, String]({
-"event:/Hit": "{2242f7d2-3a92-446e-80fc-9b44ce74c285}",
-"event:/SwordSlash": "{09603b40-57c6-49aa-8a6f-1408da06a257}",
-"event:/Theme": "{b522a844-9eab-4069-b7cf-e2e0e6386e60}"
-})
+BankFolderPath = ""
+BankPath = ""
+StringsBankPath = ""
+BankRelativePath = ""
+StringsBankRelativePath = ""
+BankEvents = {}
 metadata/_custom_type_script = "uid://chcbdnmidk1us"

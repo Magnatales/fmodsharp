@@ -1,5 +1,7 @@
 using System;
+using Audio.FmodSharp;
 using Godot;
+using Environment = System.Environment;
 
 public partial class TestFmod : Node
 {
@@ -14,7 +16,12 @@ public partial class TestFmod : Node
         FmodServer.Update();
         if (Input.IsActionJustPressed("ui_accept"))
         {
-            FmodServer.Play(new Guid("{2242f7d2-3a92-446e-80fc-9b44ce74c285}"));
+            FmodServer.PlayBgm(new Guid("{b522a844-9eab-4069-b7cf-e2e0e6386e60}"));
+        }
+        
+        if (Input.IsActionJustPressed("ui_cancel"))
+        {
+            FmodServer.PlayBgm(new Guid("{426d2e95-a1af-4065-8d20-d5add94e48bd}"));
         }
 
     }

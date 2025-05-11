@@ -5,6 +5,8 @@ using System.IO;
 using FMOD.Studio;
 using FileAccess = Godot.FileAccess;
 
+namespace Audio.FmodSharp;
+
 [Tool]
 public partial class FmodSharpEditor : EditorPlugin
 {
@@ -218,7 +220,6 @@ public partial class FmodSharpEditor : EditorPlugin
 	private void OnItemSelected()
 	{
 		_currentInstance.stop(STOP_MODE.IMMEDIATE);
-		_currentInstance.release();
 		
 		var selectedItem = _dockView.Tree.GetSelected();
 		var fmodEvent = selectedItem.GetMetadata(0).As<FmodEvent>();
@@ -227,6 +228,7 @@ public partial class FmodSharpEditor : EditorPlugin
 			_dockView.RightPanel.Visible = false;
 			return;
 		}
+		_currentInstance.release();
 		_dockView.RightPanel.Visible = true;
 		_dockView.EventPathLabel.Text = $"{fmodEvent.Path}";
 		_dockView.EventGuidLabel.Text = $"{fmodEvent.Id}";
