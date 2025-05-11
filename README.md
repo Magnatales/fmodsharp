@@ -10,7 +10,7 @@ Event UI based on [this integration](https://github.com/utopia-rise/fmod-gdexten
 |------------------------|-------------------------------------------------------|-------------|
 | Single bank only        | Currently only supports one FMOD bank.                | Give me some time.    |
 | No custom nodes         | Custom nodes for events are not yet implemented.      | Use code for triggering events. |
-| Parameters not filled | Parameters aren't filled in the editor view | Give me some time |
+| Parameters not filled | Parameters aren't filled in the editor view | Give me some time. |
 
 ---
 
