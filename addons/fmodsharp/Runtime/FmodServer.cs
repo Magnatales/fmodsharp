@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Godot;
@@ -19,8 +20,8 @@ public static class FmodServer
     private static FMOD.Studio.System _system;
     private static Bank _bank;
     private static Bank _stringsBank;
-
     private static EventInstance _currentBgm;
+    
 
     /// <summary>
     /// Gets whether the FMOD system has been initialized.
@@ -32,17 +33,36 @@ public static class FmodServer
     /// </summary>
     public static void Initialize()
     {
-        if (_system.isValid())
+        try
         {
-            _system.release();
-            _system.clearHandle();
-        }
+            if (!IsInitialized)
+            {
+                NativeLibrary.SetDllImportResolver(typeof(FmodServer).Assembly, (name, assembly, path) =>
+                {
+                    var resolvedPath = name switch
+                    {
+                        "fmod" => ProjectSettings.GlobalizePath("res://addons/fmodsharp/NativeLib/fmod.dll"),
+                        "fmodstudio" =>
+                            ProjectSettings.GlobalizePath("res://addons/fmodsharp/NativeLib/fmodstudio.dll"),
+                        _ => null
+                    };
 
-        if (_bank.isValid())
-        {
-            _bank.unload();
-            _bank.clearHandle();
+                    if (resolvedPath != null && File.Exists(resolvedPath))
+                    {
+                        return NativeLibrary.Load(resolvedPath);
+                    }
+
+                    return IntPtr.Zero;
+                });
+            }
         }
+        catch (Exception _)
+        {
+            // ignored
+        }
+        
+        if(IsInitialized)
+            Dispose();
 
         _cache = ResourceLoader.Load<FmodSharpCache>("uid://c0qeurhxncbgw");
         if (string.IsNullOrEmpty(_cache.BankPath) || string.IsNullOrEmpty(_cache.StringsBankPath))
@@ -50,28 +70,6 @@ public static class FmodServer
             GD.PrintErr($"{nameof(FmodServer)}: Bank path or strings path are null or empty.");
             return;
         }
-        
-        #if TOOLS
-        if (!IsInitialized)
-        {
-            NativeLibrary.SetDllImportResolver(typeof(FmodServer).Assembly, (name, assembly, path) =>
-            {
-                string resolvedPath = name switch
-                {
-                    "fmod" => ProjectSettings.GlobalizePath("res://addons/fmodsharp/NativeLib/fmod.dll"),
-                    "fmodstudio" => ProjectSettings.GlobalizePath("res://addons/fmodsharp/NativeLib/fmodstudio.dll"),
-                    _ => null
-                };
-
-                if (resolvedPath != null && File.Exists(resolvedPath))
-                {
-                    return NativeLibrary.Load(resolvedPath);
-                }
-
-                return IntPtr.Zero;
-            });
-        }
-#endif
         
         // The FMOD docs recommend calling any Core API before initializing the system to ensure the fmod.dll is loaded first.
         Memory.GetStats(out _, out _);
