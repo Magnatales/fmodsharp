@@ -1,6 +1,6 @@
 [gd_scene load_steps=18 format=3 uid="uid://1qphoknjlixy"]
 
-[ext_resource type="Script" uid="uid://buwivhntqv21w" path="res://addons/fmodsharp/Runtime/FmodSharpView.cs" id="1_vlbac"]
+[ext_resource type="Script" uid="uid://buwivhntqv21w" path="res://addons/fmodsharp/Scripts/FmodSharpView.cs" id="1_vlbac"]
 [ext_resource type="Texture2D" uid="uid://b2bgpj30ac2au" path="res://addons/fmodsharp/Images/logo.png" id="2_jqvun"]
 [ext_resource type="Texture2D" uid="uid://dck1jyao2txxk" path="res://addons/fmodsharp/Images/FolderIconOpen.png" id="3_l2bxh"]
 [ext_resource type="Texture2D" uid="uid://cfqs4khhcwp4c" path="res://addons/fmodsharp/Images/BankIcon.png" id="4_jqvun"]
@@ -83,7 +83,7 @@ data = {
 [sub_resource type="ImageTexture" id="ImageTexture_7u6kl"]
 image = SubResource("Image_d436r")
 
-[node name="FmodSharpView" type="Control" node_paths=PackedStringArray("SelectFolder", "FetchBanks", "FolderLabel", "BankLabel", "Tree", "CopyPathButton", "CopyGuidButton", "PlayButton", "StopButton", "RightPanel", "EventPathLabel", "EventGuidLabel", "AutoFetchOnFocus")]
+[node name="FmodSharpView" type="Control" node_paths=PackedStringArray("SelectFolder", "FetchBanks", "FolderLabel", "BankLabel", "Tree", "CopyPathButton", "CopyGuidButton", "PlayButton", "StopButton", "RightPanel", "EventPathLabel", "EventGuidLabel", "AutoFetchOnFocus", "Debug")]
 layout_mode = 3
 anchor_right = 0.218
 anchor_bottom = 1.0
@@ -104,6 +104,7 @@ RightPanel = NodePath("VBoxContainer/BaseColorPanel/MarginContainer/HSplitContai
 EventPathLabel = NodePath("VBoxContainer/BaseColorPanel/MarginContainer/HSplitContainer/MarginContainer/ScrollContainer/RightPanelContent/PathsBG/MarginContainer/PathsContainer/ValueContainer/PathLabel")
 EventGuidLabel = NodePath("VBoxContainer/BaseColorPanel/MarginContainer/HSplitContainer/MarginContainer/ScrollContainer/RightPanelContent/PathsBG/MarginContainer/PathsContainer/ValueContainer/GuidLabel")
 AutoFetchOnFocus = NodePath("VBoxContainer/FetchBanks/AutoFetchCheckBox")
+Debug = NodePath("VBoxContainer/FetchBanks/DebugCheckBox")
 
 [node name="FileDialog" type="FileDialog" parent="."]
 
@@ -200,6 +201,13 @@ layout_mode = 2
 text = "AutoFetch OnFocus"
 
 [node name="AutoFetchCheckBox" type="CheckBox" parent="VBoxContainer/FetchBanks"]
+layout_mode = 2
+
+[node name="DebugLabel" type="Label" parent="VBoxContainer/FetchBanks"]
+layout_mode = 2
+text = "Debug Enabled"
+
+[node name="DebugCheckBox" type="CheckBox" parent="VBoxContainer/FetchBanks"]
 layout_mode = 2
 
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]

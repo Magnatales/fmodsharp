@@ -23,6 +23,7 @@ public partial class FmodSharpView : Control
     [Export] public Label EventGuidLabel;
     
     [Export] public CheckBox AutoFetchOnFocus;
+    [Export] public CheckBox Debug;
 
     public override void _EnterTree()
     {

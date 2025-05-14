@@ -11,5 +11,5 @@ public partial class FmodSharpCache : Resource
     [Export] public string BankRelativePath {get; set;}
     [Export] public string StringsBankRelativePath {get; set;}
     
-    [Export] public Godot.Collections.Dictionary<string, string> BankEvents {get; set;}
+    [Export] public bool Debug {get; set;}
 }

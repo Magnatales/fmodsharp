@@ -1,6 +1,7 @@
 #if TOOLS
 using Godot;
 using System;
+using System.Diagnostics;
 using System.IO;
 using FMOD.Studio;
 using FileAccess = Godot.FileAccess;
@@ -18,6 +19,8 @@ public partial class FmodSharpEditor : EditorPlugin
 	private Texture2D _eventsIcon = ResourceLoader.Load<Texture2D>("uid://dv67yqss4qauw");
 	
 	private const string AutoFetchkey = "fmodsharp.autofetch";
+	private const string DebugKey = "fmodsharp.debug";
+	
 	public override void _EnterTree()
 	{
 		_dockView = GD.Load<PackedScene>("uid://1qphoknjlixy").Instantiate<FmodSharpView>();
@@ -53,7 +56,23 @@ public partial class FmodSharpEditor : EditorPlugin
 				EditorInterface.Singleton.GetEditorSettings().SetSetting(AutoFetchkey, false);
 			}
 		};
+		
+		_dockView.Debug.Pressed += () =>
+		{
+			if (_dockView.Debug.IsPressed())
+			{
+				cache.Debug = true;
+				EditorInterface.Singleton.GetEditorSettings().SetSetting(DebugKey, true);
+			}
+			else
+			{
+				cache.Debug = false;
+				EditorInterface.Singleton.GetEditorSettings().SetSetting(DebugKey, false);
+			}
+		};
+		
 		_dockView.AutoFetchOnFocus.ButtonPressed = EditorInterface.Singleton.GetEditorSettings().GetSetting(AutoFetchkey).AsBool();
+		_dockView.Debug.ButtonPressed = EditorInterface.Singleton.GetEditorSettings().GetSetting(DebugKey).AsBool();
 		
 		if (!string.IsNullOrEmpty(cache.BankFolderPath))
 		{
@@ -89,9 +108,9 @@ public partial class FmodSharpEditor : EditorPlugin
 		_dockView.StopButton.Pressed -= StopCurrentInstance;
 		_dockView.CopyGuidButton.Pressed -= CopyGuid;
 		_dockView.CopyPathButton.Pressed -= CopyPath;
-		_fileDialog.Free();
+		_fileDialog.QueueFree();
 		RemoveControlFromBottomPanel(_dockView);
-		_dockView.Free();
+		_dockView.QueueFree();
 		FmodServer.Dispose();
 	}
 
@@ -161,15 +180,15 @@ public partial class FmodSharpEditor : EditorPlugin
 	private void FetchBanks()
 	{
 		var cache = ResourceLoader.Load<FmodSharpCache>("uid://c0qeurhxncbgw");
-
 		if (!TryPopulateBankPaths(cache))
 		{
 			return;
 		}
 		_dockView.Tree.Clear();
-		
 		var allEvents = FmodServer.GetAllEvents();
-		cache.BankEvents = new();
+		if (allEvents == null || allEvents.Length == 0)
+			return;
+		
 		var root = _dockView.Tree.CreateItem();
 		var stringsRoot = _dockView.Tree.CreateItem(root);
 		stringsRoot.SetText(0, cache.StringsBankRelativePath);
@@ -207,7 +226,6 @@ public partial class FmodSharpEditor : EditorPlugin
 		{
 			e.getPath(out var path);
 			e.getID(out var id);
-			cache.BankEvents.Add(path, id.ToString());
 			var item = _dockView.Tree.CreateItem(eventsRoot);
 			var name = path.Substring(path.LastIndexOf('/') + 1);
 			item.SetText(0, name);

@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://bflv8elstveym"]
+
+[ext_resource type="Script" uid="uid://cg6sgflnadpx3" path="res://addons/fmodsharp/Scripts/Nodes/FmodWorldDebugger.cs" id="1_ey6nw"]
+[ext_resource type="Script" uid="uid://ctg2lwi5bl7tw" path="res://addons/fmodsharp/Scripts/Nodes/FmodScreenDebugger.cs" id="2_5368c"]
+
+[node name="FmodWorldDebugger" type="Node2D"]
+z_index = 4096
+script = ExtResource("1_ey6nw")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="FmodScreenDebugger" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("2_5368c")

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using System.Reflection;
@@ -8,6 +9,8 @@ using FMOD;
 using FMOD.Studio;
 using Godot.Collections;
 using FileAccess = Godot.FileAccess;
+using Vector2 = Godot.Vector2;
+using Vector3 = Godot.Vector3;
 
 namespace Audio.FmodSharp;
 
@@ -22,6 +25,8 @@ public static class FmodServer
     private static Bank _stringsBank;
     private static EventInstance _currentBgm;
     
+    public static readonly List<DebugSoundInstance> DebugSoundInstances = new();
+    private static bool _isDebug;
 
     /// <summary>
     /// Gets whether the FMOD system has been initialized.
@@ -33,6 +38,8 @@ public static class FmodServer
     /// </summary>
     public static void Initialize()
     {
+#if TOOLS
+        // This magical code is so in editor and play mode you don't need to have the .dlls in the root of the project
         try
         {
             if (!IsInitialized)
@@ -60,35 +67,37 @@ public static class FmodServer
         {
             // ignored
         }
+#endif
         
         if(IsInitialized)
             Dispose();
-
+        
         _cache = ResourceLoader.Load<FmodSharpCache>("uid://c0qeurhxncbgw");
+  
         if (string.IsNullOrEmpty(_cache.BankPath) || string.IsNullOrEmpty(_cache.StringsBankPath))
         {
             GD.PrintErr($"{nameof(FmodServer)}: Bank path or strings path are null or empty.");
             return;
         }
-        
+        _isDebug = _cache.Debug;
         // The FMOD docs recommend calling any Core API before initializing the system to ensure the fmod.dll is loaded first.
-        Memory.GetStats(out _, out _);
+        Memory.GetStats(out _, out _); // fmod.dll
+        Util.parseID("", out _); // fmodstudio.dll
         
-        var result = FMOD.Studio.System.create(out _system);
-        Check(result);
+        CheckResult(FMOD.Studio.System.create(out _system));
         
-        result = _system.initialize(512, FMOD.Studio.INITFLAGS.NORMAL, FMOD.INITFLAGS.NORMAL, IntPtr.Zero);
-        Check(result);
+        CheckResult(_system.initialize(512, FMOD.Studio.INITFLAGS.NORMAL, FMOD.INITFLAGS.NORMAL, IntPtr.Zero));
+        
+        CheckResult(_system.getCoreSystem(out var coreSystem));
+        coreSystem.set3DSettings(1.0f, 1.0f, 0.01f);
         
         var bankPath = ProjectSettings.GlobalizePath(_cache.BankPath);
         var bankData = FileAccess.GetFileAsBytes(bankPath);
-        result = _system.loadBankMemory(bankData, LOAD_BANK_FLAGS.NORMAL, out _bank);
-        Check(result);
+        CheckResult(_system.loadBankMemory(bankData, LOAD_BANK_FLAGS.NORMAL, out _bank));
         
         var stringsPath = ProjectSettings.GlobalizePath(_cache.StringsBankPath);
         var stringsData = FileAccess.GetFileAsBytes(stringsPath);
-        result = _system.loadBankMemory(stringsData, LOAD_BANK_FLAGS.NORMAL, out _stringsBank);
-        Check(result);
+        CheckResult(_system.loadBankMemory(stringsData, LOAD_BANK_FLAGS.NORMAL, out _stringsBank));
         IsInitialized = true;
     }
     
@@ -99,25 +108,68 @@ public static class FmodServer
     {
         if (!IsInitialized) return;
         _system.update();
+
+        if (_isDebug)
+        {
+            for (int i = DebugSoundInstances.Count - 1; i >= 0; i--)
+            {
+                var instance = DebugSoundInstances[i];
+                if (!instance.instance.isValid())
+                {
+                    DebugSoundInstances.RemoveAt(i);
+                }
+            }
+        }
     }
 
     /// <summary>
     /// Plays an event by its unique identifier.
     /// </summary>
     /// <param name="guid">The unique identifier of the FMOD event.</param>
-    public static void Play(Guid guid)
+    /// <param name="position">The position in 3D space to play the event (default is zero).</param>
+    public static EventDescription Play(Guid guid, Vector2 position = default)
     {
-        if (!CheckInitialized()) return;
+        if (!CheckInitialized()) return default;
+        CheckResult(_system.getEventByID(new GUID(guid), out var eventDescription));
+        return PlayInternal(eventDescription, position);
+    }
+    
+    /// <summary>
+    /// Plays an event by its path.
+    /// </summary>
+    /// <param name="path">The path to the FMOD event.</param>
+    /// <param name="position">The position in 3D space to play the event (default is zero).</param>
+    public static EventDescription Play(string path, Vector2 position = default)
+    {
+        if (!CheckInitialized()) return default;
+        CheckResult(_system.getEvent(path, out var eventDescription));
+        return PlayInternal(eventDescription, position);
+    }
+    
+
+    private static EventDescription PlayInternal(EventDescription eventDescription, Vector2 position)
+    {
+        CheckResult(eventDescription.createInstance(out var instance));
+        eventDescription.is3D(out var is3D);
+        if (is3D)
+        {
+            instance.set3DAttributes(position.To3DAttributes());
+        }
+        CheckResult(instance.start());
+        eventDescription.isOneshot(out var isOneShot);
+        if (isOneShot)
+        {
+            CheckResult(instance.release());
+        }
+
+        if (_isDebug)
+        {
+            eventDescription.getMinMaxDistance(out var min, out var max);
+            eventDescription.getPath(out var path);
+            DebugSoundInstances.Add(new DebugSoundInstance(path, instance, position, min, max, is3D));
+        }
         
-        var result = _system.getEventByID(new GUID(guid), out var eventDescription);
-        Check(result);
-        
-        result = eventDescription.createInstance(out var instance);
-        Check(result);
-        result = instance.start();
-        Check(result);
-        result = instance.release();
-        Check(result);
+        return eventDescription;
     }
     
     /// <summary>
@@ -129,19 +181,16 @@ public static class FmodServer
     {
         if (!CheckInitialized()) return;
         
-        var result = _system.getEventByID(new GUID(guid), out var eventDescription);
-        Check(result);
+        CheckResult(_system.getEventByID(new GUID(guid), out var eventDescription));
 
         if (_currentBgm.isValid())
         {
-            _currentBgm.stop(stopMode);
-            _currentBgm.release();
+            CheckResult(_currentBgm.stop(stopMode));
+            CheckResult(_currentBgm.release());
         }
         
-        result = eventDescription.createInstance(out _currentBgm);
-        Check(result);
-        result = _currentBgm.start();
-        Check(result);
+        CheckResult(eventDescription.createInstance(out _currentBgm));
+        CheckResult(_currentBgm.start());
     }
     
     /// <summary>
@@ -154,37 +203,16 @@ public static class FmodServer
         if (!CheckInitialized()) return;
         
         var result = _system.getEvent(path, out var eventDescription);
-        Check(result);
+        CheckResult(result);
         
         if (_currentBgm.isValid())
         {
-            _currentBgm.stop(stopMode);
-            _currentBgm.release();
+            CheckResult(_currentBgm.stop(stopMode));
+            CheckResult(_currentBgm.release());
         }
         
-        result = eventDescription.createInstance(out _currentBgm);
-        Check(result);
-        result = _currentBgm.start();
-        Check(result);
-    }
-    
-    /// <summary>
-    /// Plays an event by its path.
-    /// </summary>
-    /// <param name="path">The path to the FMOD event.</param>
-    public static void Play(string path)
-    {
-        if (!CheckInitialized()) return;
-        
-        var result = _system.getEvent(path, out var eventDescription);
-        Check(result);
-        
-        result = eventDescription.createInstance(out var instance);
-        Check(result);
-        result = instance.start();
-        Check(result);
-        result = instance.release();
-        Check(result);
+        CheckResult(eventDescription.createInstance(out _currentBgm));
+        CheckResult(_currentBgm.start());
     }
     
     /// <summary>
@@ -195,9 +223,9 @@ public static class FmodServer
     public static void SetBusVolume(string path, float volume)
     {
         if (!CheckInitialized()) return;
-        var result = _system.getBus(path, out var bus);
-        Check(result);
-        bus.setVolume(volume);
+        
+        CheckResult(_system.getBus(path, out var bus));
+        CheckResult(bus.setVolume(volume));
     }
     
     /// <summary>
@@ -208,9 +236,9 @@ public static class FmodServer
     public static void SetBusVolume(Guid guid, float volume)
     {
         if (!CheckInitialized()) return;
-        var result = _system.getBusByID(new GUID(guid), out var bus);
-        Check(result);
-        bus.setVolume(volume);
+        
+        CheckResult(_system.getBusByID(new GUID(guid), out var bus));
+        CheckResult(bus.setVolume(volume));
     }
 
     /// <summary>
@@ -221,9 +249,9 @@ public static class FmodServer
     public static void MuteBus(string path, bool mute)
     {
         if (!CheckInitialized()) return;
-        var result = _system.getBus(path, out var bus);
-        Check(result);
-        bus.setMute(mute);
+        
+        CheckResult(_system.getBus(path, out var bus));
+        CheckResult(bus.setMute(mute));
     }
     
     /// <summary>
@@ -234,9 +262,9 @@ public static class FmodServer
     public static void MuteBus(Guid guid, bool mute)
     {
         if (!CheckInitialized()) return;
-        var result = _system.getBusByID(new GUID(guid), out var bus);
-        Check(result);
-        bus.setMute(mute);
+        
+        CheckResult(_system.getBusByID(new GUID(guid), out var bus));
+        CheckResult(bus.setMute(mute));
     }
     
     /// <summary>
@@ -248,8 +276,8 @@ public static class FmodServer
     public static void SetParameter(EventInstance instance, string paramName, float value)
     {
         if (!CheckInitialized()) return;
-        var result = instance.setParameterByName(paramName, value);
-        Check(result);
+        
+        CheckResult(instance.setParameterByName(paramName, value));
     }
     
     /// <summary>
@@ -259,14 +287,10 @@ public static class FmodServer
     /// <returns>A new event instance.</returns>
     public static EventInstance CreateInstance(string path)
     {
-        if (!CheckInitialized())
-            return default;
+        if (!CheckInitialized()) return default;
         
-        var result = _system.getEvent(path, out var eventDescription);
-        Check(result);
-        
-        result = eventDescription.createInstance(out var instance);
-        Check(result);
+        CheckResult(_system.getEvent(path, out var eventDescription));
+        CheckResult(eventDescription.createInstance(out var instance));
         return instance;
     }
     
@@ -277,14 +301,10 @@ public static class FmodServer
     /// <returns>A new event instance.</returns>
     public static EventInstance CreateInstance(Guid guid)
     { 
-        if (!CheckInitialized())
-            return default;
+        if (!CheckInitialized()) return default;
         
-        var result = _system.getEventByID(new GUID(guid), out var eventDescription);
-        Check(result);
-        
-        result = eventDescription.createInstance(out var instance);
-        Check(result);
+        CheckResult(_system.getEventByID(new GUID(guid), out var eventDescription));
+        CheckResult(eventDescription.createInstance(out var instance));
         return instance;
     }
     
@@ -297,8 +317,7 @@ public static class FmodServer
     {
         if (!CheckInitialized()) return default;
         
-        var result = _system.getEvent(path, out var eventDescription);
-        Check(result);
+        CheckResult(_system.getEvent(path, out var eventDescription));
         return eventDescription;
     }
 
@@ -310,8 +329,22 @@ public static class FmodServer
     {
         if (!CheckInitialized()) return null;
         
-        _bank.getEventList(out var eventDescriptions);
+        CheckResult(_bank.getEventList(out var eventDescriptions));
         return eventDescriptions;
+    }
+    
+    /// <summary>
+    /// Sets the location of a listener in 3D space.
+    /// </summary>
+    /// <param name="listenerIndex">The index of the listener.</param>
+    /// <param name="node">The Node2D or Node3D to set the listener's location.</param>
+    /// <param name="velocity">The velocity of the listener (default is zero).</param>
+    public static void SetListenerLocation(int listenerIndex, Node2D node,  Vector3 velocity = default)
+    {
+        if (!CheckInitialized()) return;
+
+        var attributes = node.To3DAttributes(velocity);
+        CheckResult(_system.setListenerAttributes(listenerIndex, attributes));
     }
     
     /// <summary>
@@ -322,19 +355,7 @@ public static class FmodServer
     /// <param name="type">The type of callback to use.</param>
     public static void SetCallback(EventInstance instance, EVENT_CALLBACK callback, EVENT_CALLBACK_TYPE type)
     {
-        var result = instance.setCallback(callback, type);
-        Check(result);
-    }
-
-    /// <summary>
-    /// Checks if the result from an FMOD operation is valid.
-    /// </summary>
-    private static void Check(RESULT result)
-    {
-        if (result != RESULT.OK)
-        {
-            GD.PrintErr($"{nameof(FmodServer)}: {result}");
-        }
+        CheckResult(instance.setCallback(callback, type));
     }
     
     /// <summary>
@@ -347,14 +368,24 @@ public static class FmodServer
         GD.PrintErr($"{nameof(FmodServer)}: Not initialized. \n1. Fetch your banks through the FmodSharp panel at the bottom.\n2. Call FmodServer.Initialize() \n3. Call FmodServer.Update() in your _Process(double delta) \n4. Enjoy!");
         return false;
     }
+
+    /// <summary>
+    /// Checks if the result from an FMOD operation is valid.
+    /// </summary>
+    private static void CheckResult(RESULT result)
+    {
+        if (result != RESULT.OK && !Engine.IsEditorHint())
+        {
+            string message = $"{nameof(FmodServer)}: {result}\n{System.Environment.StackTrace}";
+            GD.PushError(message);
+        }
+    }
     
     /// <summary>
     /// Disposes of the FMOD system and resources.
     /// </summary>
     public static void Dispose()
     {
-        if (!IsInitialized) return;
-        
         if (_currentBgm.isValid())
         {
             _currentBgm.stop(STOP_MODE.IMMEDIATE);

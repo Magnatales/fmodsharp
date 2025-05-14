@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="FmodSharp"
+config/name="FMODSharp"
 run/main_scene="uid://bn7a8mpmmsn1t"
 config/features=PackedStringArray("4.4", "C#", "Forward Plus")
 config/icon="res://icon.svg"
