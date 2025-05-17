@@ -6,6 +6,7 @@
 [node name="FmodWorldDebugger" type="Node2D"]
 z_index = 4096
 script = ExtResource("1_ey6nw")
+metadata/_edit_vertical_guides_ = [-819.0, -907.0]
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
