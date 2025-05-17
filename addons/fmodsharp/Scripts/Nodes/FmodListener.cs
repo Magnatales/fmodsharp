@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Godot;
 using Audio.FmodSharp;
 
+[Icon("uid://cq5arhf80ch8e")]
 [GlobalClass]
 public partial class FmodListener : Node2D
 {
@@ -23,23 +24,5 @@ public partial class FmodListener : Node2D
     public override void _Process(double delta)
     {
         FmodServer.SetListenerLocation(_listenerIndex, this);
-        
-        //wasd movement
-        if (Input.IsActionPressed("ui_up"))
-        {
-            Position += new Vector2(0, -1) * 200f * (float)delta;
-        }
-        if (Input.IsActionPressed("ui_down"))
-        {
-            Position += new Vector2(0, 1) * 200f * (float)delta;
-        }
-        if (Input.IsActionPressed("ui_left"))
-        {
-            Position += new Vector2(-1, 0) * 200f * (float)delta;
-        }
-        if (Input.IsActionPressed("ui_right"))
-        {
-            Position += new Vector2(1, 0) * 200f * (float)delta;
-        }
     }
 }
