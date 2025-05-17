@@ -28,14 +28,10 @@ public static class FmodServer
     private static Bank _stringsBank;
     private static EventInstance _currentBgm;
     
-    public static readonly List<DebugSoundInstance> DebugSoundInstances = new();
+    private static bool _isInitialized;
+    private static Action _onInitialized;
     private static bool _isDebug;
-
-    /// <summary>
-    /// Gets whether the FMOD system has been initialized.
-    /// </summary>
-    public static bool IsInitialized { get; private set; } = false;
-    private static Action OnInitialized;
+    public static readonly List<DebugSoundInstance> DebugSoundInstances = new();
 
     /// <summary>
     /// Initializes the FMOD system and loads the necessary banks.
@@ -46,7 +42,7 @@ public static class FmodServer
         // This magical code is so in editor and play mode you don't need to have the .dlls in the root of the project
         try
         {
-            if (!IsInitialized)
+            if (!_isInitialized)
             {
                 NativeLibrary.SetDllImportResolver(typeof(FmodServer).Assembly, (name, assembly, path) =>
                 {
@@ -73,7 +69,7 @@ public static class FmodServer
         }
 #endif
         
-        if(IsInitialized)
+        if(_isInitialized)
             Dispose();
         
         _cache = ResourceLoader.Load<FmodSharpCache>("uid://c0qeurhxncbgw");
@@ -84,7 +80,7 @@ public static class FmodServer
             GD.PrintErr($"{nameof(FmodServer)}: Bank path or strings path are null or empty.");
             return;
         }
-        // The FMOD docs recommend calling any Core API before initializing the system to ensure the fmod.dll is loaded first.
+        // The FMOD documentation (https://www.fmod.com/docs/2.03/api/studio-guide.html) recommends calling any Core API function before initializing the system to ensure that fmod.dll is loaded first.
         Memory.GetStats(out _, out _); // fmod.dll
         Util.parseID("", out _); // fmodstudio.dll
         
@@ -102,19 +98,22 @@ public static class FmodServer
         var stringsPath = ProjectSettings.GlobalizePath(_cache.StringsBankPath);
         var stringsData = FileAccess.GetFileAsBytes(stringsPath);
         CheckResult(_system.loadBankMemory(stringsData, LOAD_BANK_FLAGS.NORMAL, out _stringsBank));
-        IsInitialized = true;
-        OnInitialized?.Invoke();
+        _isInitialized = true;
+        _onInitialized?.Invoke();
     }
 
+    /// <summary>
+    /// Registers a callback to be called when the FMOD system is initialized.
+    /// </summary>
     public static void OnInitialize(Action onInitialized)
     {
-        if (IsInitialized)
+        if (_isInitialized)
         {
             onInitialized?.Invoke();
         }
         else
         {
-            OnInitialized += onInitialized;
+            _onInitialized += onInitialized;
         }
     }
     
@@ -123,7 +122,7 @@ public static class FmodServer
     /// </summary>
     public static void Update()
     {
-        if (!IsInitialized) return;
+        if (!_isInitialized) return;
         _system.update();
 
         if (_isDebug)
@@ -144,7 +143,8 @@ public static class FmodServer
     /// </summary>
     /// <param name="guid">The unique identifier of the FMOD event.</param>
     /// <param name="position">The position in 3D space to play the event (default is zero).</param>
-    public static EventDescription Play(Guid guid, Vector2 position = default)
+    /// <returns>An EventInstance representing the played event.</returns>
+    public static EventInstance Play(Guid guid, Vector2 position = default)
     {
         if (!CheckInitialized()) return default;
         CheckResult(_system.getEventByID(new GUID(guid), out var eventDescription));
@@ -156,14 +156,15 @@ public static class FmodServer
     /// </summary>
     /// <param name="path">The path to the FMOD event.</param>
     /// <param name="position">The position in 3D space to play the event (default is zero).</param>
-    public static EventDescription Play(string path, Vector2 position = default)
+    /// <returns>An EventInstance representing the played event.</returns>
+    public static EventInstance Play(string path, Vector2 position = default)
     {
         if (!CheckInitialized()) return default;
         CheckResult(_system.getEvent(path, out var eventDescription));
         return PlayInternal(eventDescription, position);
     }
 
-    private static EventDescription PlayInternal(EventDescription eventDescription, Vector2 position)
+    private static EventInstance PlayInternal(EventDescription eventDescription, Vector2 position)
     {
         CheckResult(eventDescription.createInstance(out var instance));
         eventDescription.is3D(out var is3D);
@@ -185,7 +186,7 @@ public static class FmodServer
             DebugSoundInstances.Add(new DebugSoundInstance(path, instance, position, min, max, is3D));
         }
         
-        return eventDescription;
+        return instance;
     }
     
     /// <summary>
@@ -193,9 +194,9 @@ public static class FmodServer
     /// </summary>
     /// <param name="guid">The unique identifier of the FMOD event.</param>
     /// <param name="stopMode">The stop mode for the BGM (default is allow fade out).</param>
-    public static void PlayBgm(Guid guid, STOP_MODE stopMode = STOP_MODE.ALLOWFADEOUT)
+    public static EventInstance PlayBgm(Guid guid, STOP_MODE stopMode = STOP_MODE.ALLOWFADEOUT)
     {
-        if (!CheckInitialized()) return;
+        if (!CheckInitialized()) return default;
         
         CheckResult(_system.getEventByID(new GUID(guid), out var eventDescription));
 
@@ -207,6 +208,7 @@ public static class FmodServer
         
         CheckResult(eventDescription.createInstance(out _currentBgm));
         CheckResult(_currentBgm.start());
+        return _currentBgm;
     }
     
     /// <summary>
@@ -214,9 +216,9 @@ public static class FmodServer
     /// </summary>
     /// <param name="path">The path to the FMOD event.</param>
     /// <param name="stopMode">The stop mode for the BGM (default is allow fade out).</param>
-    public static void PlayBgm(string path, STOP_MODE stopMode = STOP_MODE.ALLOWFADEOUT)
+    public static EventInstance PlayBgm(string path, STOP_MODE stopMode = STOP_MODE.ALLOWFADEOUT)
     {
-        if (!CheckInitialized()) return;
+        if (!CheckInitialized()) return default;
         
         var result = _system.getEvent(path, out var eventDescription);
         CheckResult(result);
@@ -229,6 +231,23 @@ public static class FmodServer
         
         CheckResult(eventDescription.createInstance(out _currentBgm));
         CheckResult(_currentBgm.start());
+        return _currentBgm;
+    }
+    
+    /// <summary>
+    /// Stops the currently playing background music (BGM).
+    /// </summary>
+    /// <param name="stopMode">The stop mode for stopping the BGM (default is allow fade out).</param>
+    public static void StopBgm(STOP_MODE stopMode = STOP_MODE.ALLOWFADEOUT)
+    {
+        if (!CheckInitialized()) return;
+        
+        if (_currentBgm.isValid())
+        {
+            CheckResult(_currentBgm.stop(stopMode));
+            CheckResult(_currentBgm.release());
+            _currentBgm.clearHandle();
+        }
     }
     
     /// <summary>
@@ -306,19 +325,6 @@ public static class FmodServer
         
         CheckResult(_system.getBus(busPath, out var bus));
         CheckResult(bus.setPaused(paused));
-    }
-    
-    /// <summary>
-    /// Sets a parameter for an event instance.
-    /// </summary>
-    /// <param name="instance">The event instance.</param>
-    /// <param name="paramName">The name of the parameter.</param>
-    /// <param name="value">The value to set for the parameter.</param>
-    public static void SetParameter(EventInstance instance, string paramName, float value)
-    {
-        if (!CheckInitialized()) return;
-        
-        CheckResult(instance.setParameterByName(paramName, value));
     }
     
     /// <summary>
@@ -445,22 +451,11 @@ public static class FmodServer
     }
     
     /// <summary>
-    /// Sets a callback for an event instance.
-    /// </summary>
-    /// <param name="instance">The event instance.</param>
-    /// <param name="callback">The callback to set.</param>
-    /// <param name="type">The type of callback to use.</param>
-    public static void SetCallback(EventInstance instance, EVENT_CALLBACK callback, EVENT_CALLBACK_TYPE type)
-    {
-        CheckResult(instance.setCallback(callback, type));
-    }
-    
-    /// <summary>
     /// Checks if FMOD has been initialized.
     /// </summary>
     private static bool CheckInitialized()
     {
-        if (IsInitialized) return true;
+        if (_isInitialized) return true;
         
         GD.PrintErr($"{nameof(FmodServer)}: Not initialized. \n1. Fetch your banks through the FmodSharp panel at the bottom.\n2. Call FmodServer.Initialize() \n3. Call FmodServer.Update() in your _Process(double delta) \n4. Enjoy!");
         return false;
@@ -554,6 +549,6 @@ public static class FmodServer
         }
      
         _cache = null;
-        IsInitialized = false;
+        _isInitialized = false;
     }
 }
