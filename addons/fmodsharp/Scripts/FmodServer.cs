@@ -478,7 +478,7 @@ public static class FmodServer
         }
     }
     
-    public static void PrintPerformaceData()
+    public static void PrintPerformanceData()
     {
         var performanceData = new System.Collections.Generic.Dictionary<string, float>();
         try
