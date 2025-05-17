@@ -22,6 +22,7 @@ public partial class FmodWorldDebugger : Node2D
     public override void _Draw()
     {
         var font = ThemeDB.FallbackFont;
+        
         for (var index = FmodServer.DebugSoundInstances.Count - 1; index >= 0; index--)
         {
             var sound = FmodServer.DebugSoundInstances[index];
@@ -29,7 +30,7 @@ public partial class FmodWorldDebugger : Node2D
             var text = sound.path;
             var textSize = font.GetStringSize(text);
             var textOffset = textSize / 2;
-            textOffset.Y += 10f;
+            textOffset.Y += 18f;
 
             if (sound.is3D)
             {
@@ -38,6 +39,31 @@ public partial class FmodWorldDebugger : Node2D
 
                 DrawCircle(pos, maxPixels, new Color(0.2f, 0.6f, 1f, 0.4f));
                 DrawCircle(pos, maxPixels - minPixels, new Color(0.7f, 0.2f, 1f, 0.4f));
+                
+                Vector2 up = new Vector2(0, -22);
+                Vector2 left = new Vector2(-18, 0);
+                Vector2 down = new Vector2(0, 22);
+                Vector2 right = new Vector2(18, 0);
+                Vector2[] points = {
+                    pos + up,
+                    pos + right,
+                    pos + down,
+                    pos + left
+                };
+                
+                DrawPolygon(points, new Color[] {
+                    new Color(1f, 0.2f, 0.2f, 0.6f),
+                    new Color(1f, 0.2f, 0.2f, 0.6f),
+                    new Color(1f, 0.2f, 0.2f, 0.6f),
+                    new Color(1f, 0.2f, 0.2f, 0.6f)
+                });
+
+            
+            
+                DrawLine(points[0], points[1], Colors.White, 2f, true);
+                DrawLine(points[1], points[2], Colors.White, 2f, true);
+                DrawLine(points[2], points[3], Colors.White, 2f, true);
+                DrawLine(points[3], points[0], Colors.White, 2f, true);
 
                 DrawStringOutline(font, pos - textOffset, text, modulate: new Color(0, 0, 0), size: 6, width: -0.5f,
                     fontSize: 19);

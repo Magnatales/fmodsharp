@@ -32,6 +32,7 @@ public partial class FmodScreenDebugger : Control
             DrawStringOutline(font, screenPos, displayText, modulate: new Color(0, 0, 0), size: 6, width: -0.5f,
                 fontSize: 19);
             DrawString(font, screenPos, displayText, modulate: new Color(0.9f, 0.9f, 0.9f), fontSize: 19);
+            
         }
     }
 }
