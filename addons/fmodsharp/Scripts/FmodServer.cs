@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -8,6 +9,7 @@ using Godot;
 using FMOD;
 using FMOD.Studio;
 using Godot.Collections;
+using CPU_USAGE = FMOD.CPU_USAGE;
 using FileAccess = Godot.FileAccess;
 using Vector2 = Godot.Vector2;
 using Vector3 = Godot.Vector3;
@@ -21,6 +23,7 @@ public static class FmodServer
 {
     private static FmodSharpCache _cache;
     private static FMOD.Studio.System _system;
+    private static FMOD.System _coreSystem;
     private static Bank _bank;
     private static Bank _stringsBank;
     private static EventInstance _currentBgm;
@@ -32,6 +35,7 @@ public static class FmodServer
     /// Gets whether the FMOD system has been initialized.
     /// </summary>
     public static bool IsInitialized { get; private set; } = false;
+    private static Action OnInitialized;
 
     /// <summary>
     /// Initializes the FMOD system and loads the necessary banks.
@@ -63,7 +67,7 @@ public static class FmodServer
                 });
             }
         }
-        catch (Exception _)
+        catch (Exception)
         {
             // ignored
         }
@@ -73,13 +77,13 @@ public static class FmodServer
             Dispose();
         
         _cache = ResourceLoader.Load<FmodSharpCache>("uid://c0qeurhxncbgw");
+        _isDebug = _cache.Debug;
   
         if (string.IsNullOrEmpty(_cache.BankPath) || string.IsNullOrEmpty(_cache.StringsBankPath))
         {
             GD.PrintErr($"{nameof(FmodServer)}: Bank path or strings path are null or empty.");
             return;
         }
-        _isDebug = _cache.Debug;
         // The FMOD docs recommend calling any Core API before initializing the system to ensure the fmod.dll is loaded first.
         Memory.GetStats(out _, out _); // fmod.dll
         Util.parseID("", out _); // fmodstudio.dll
@@ -88,8 +92,8 @@ public static class FmodServer
         
         CheckResult(_system.initialize(512, FMOD.Studio.INITFLAGS.NORMAL, FMOD.INITFLAGS.NORMAL, IntPtr.Zero));
         
-        CheckResult(_system.getCoreSystem(out var coreSystem));
-        coreSystem.set3DSettings(1.0f, 1.0f, 0.01f);
+        CheckResult(_system.getCoreSystem(out _coreSystem));
+        _coreSystem.set3DSettings(1.0f, 1.0f, 0.01f);
         
         var bankPath = ProjectSettings.GlobalizePath(_cache.BankPath);
         var bankData = FileAccess.GetFileAsBytes(bankPath);
@@ -99,6 +103,19 @@ public static class FmodServer
         var stringsData = FileAccess.GetFileAsBytes(stringsPath);
         CheckResult(_system.loadBankMemory(stringsData, LOAD_BANK_FLAGS.NORMAL, out _stringsBank));
         IsInitialized = true;
+        OnInitialized?.Invoke();
+    }
+
+    public static void OnInitialize(Action onInitialized)
+    {
+        if (IsInitialized)
+        {
+            onInitialized?.Invoke();
+        }
+        else
+        {
+            OnInitialized += onInitialized;
+        }
     }
     
     /// <summary>
@@ -145,7 +162,6 @@ public static class FmodServer
         CheckResult(_system.getEvent(path, out var eventDescription));
         return PlayInternal(eventDescription, position);
     }
-    
 
     private static EventDescription PlayInternal(EventDescription eventDescription, Vector2 position)
     {
@@ -268,6 +284,31 @@ public static class FmodServer
     }
     
     /// <summary>
+    /// Sets paused state for the main bus
+    /// </summary>
+    /// <param name="paused">True to pause, false to unpause.</param>
+    public static void SetMainBusPaused(bool paused)
+    {
+        if (!CheckInitialized()) return;
+        
+        CheckResult(_system.getBus("bus:/", out var bus));
+        CheckResult(bus.setPaused(paused));
+    }
+    
+    /// <summary>
+    /// Sets paused state for a bus by its path.
+    /// </summary>
+    /// <param name="paused">True to pause, false to unpause.</param>
+    /// <param name="busPath">The path to the FMOD bus.</param>
+    public static void SetBusPaused(bool paused, string busPath)
+    {
+        if (!CheckInitialized()) return;
+        
+        CheckResult(_system.getBus(busPath, out var bus));
+        CheckResult(bus.setPaused(paused));
+    }
+    
+    /// <summary>
     /// Sets a parameter for an event instance.
     /// </summary>
     /// <param name="instance">The event instance.</param>
@@ -332,6 +373,62 @@ public static class FmodServer
         CheckResult(_bank.getEventList(out var eventDescriptions));
         return eventDescriptions;
     }
+
+    public static EventDescription[] GetAllEventsStandalone()
+    {
+        var cache = ResourceLoader.Load<FmodSharpCache>("uid://c0qeurhxncbgw");
+        
+        try
+        {
+            NativeLibrary.SetDllImportResolver(typeof(FmodServer).Assembly, (name, assembly, path) =>
+                {
+                    var resolvedPath = name switch
+                    {
+                        "fmod" => ProjectSettings.GlobalizePath("res://addons/fmodsharp/NativeLib/fmod.dll"),
+                        "fmodstudio" =>
+                            ProjectSettings.GlobalizePath("res://addons/fmodsharp/NativeLib/fmodstudio.dll"),
+                        _ => null
+                    };
+
+                    if (resolvedPath != null && File.Exists(resolvedPath))
+                    {
+                        return NativeLibrary.Load(resolvedPath);
+                    }
+
+                    return IntPtr.Zero;
+                });
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
+        
+        if (string.IsNullOrEmpty(cache.BankPath) || string.IsNullOrEmpty(cache.StringsBankPath))
+        {
+            GD.PrintErr($"{nameof(FmodServer)}: Bank path or strings path are null or empty.");
+            return [];
+        }
+        
+        Memory.GetStats(out _, out _); // fmod.dll
+        Util.parseID("", out _); // fmodstudio.dll
+        
+        FMOD.Studio.System.create(out var system);
+        
+        system.initialize(512, FMOD.Studio.INITFLAGS.NORMAL, FMOD.INITFLAGS.NORMAL, IntPtr.Zero);
+        system.getCoreSystem(out var coreSystem);
+        coreSystem.set3DSettings(1.0f, 1.0f, 0.01f);
+        
+        var bankPath = ProjectSettings.GlobalizePath(cache.BankPath);
+        var bankData = FileAccess.GetFileAsBytes(bankPath);
+        system.loadBankMemory(bankData, LOAD_BANK_FLAGS.NORMAL, out var bank);
+        
+        var stringsPath = ProjectSettings.GlobalizePath(cache.StringsBankPath);
+        var stringsData = FileAccess.GetFileAsBytes(stringsPath);
+        system.loadBankMemory(stringsData, LOAD_BANK_FLAGS.NORMAL, out var stringsBank);
+        bank.getEventList(out var eventDescriptions);
+        system.unloadAll();
+        return eventDescriptions;
+    }
     
     /// <summary>
     /// Sets the location of a listener in 3D space.
@@ -381,6 +478,51 @@ public static class FmodServer
         }
     }
     
+    public static void PrintPerformaceData()
+    {
+        var performanceData = new System.Collections.Generic.Dictionary<string, float>();
+        try
+        {
+            // CPU Usage
+            CheckResult(_system.getCPUUsage(out var cpuUsage, out var coreUsage));
+            performanceData["CPU.dsp"] = coreUsage.dsp;
+            performanceData["CPU.geometry"] = coreUsage.geometry;
+            performanceData["CPU.stream"] = coreUsage.stream;
+            performanceData["CPU.update"] = coreUsage.update;
+
+            // Memory Usage (converted to float)
+            CheckResult(Memory.GetStats(out int currentAlloc, out int maxAlloc));
+            performanceData["memory.currently_allocated"] = currentAlloc;
+            performanceData["memory.max_allocated"] = maxAlloc;
+
+            // File Usage (converted to float)
+            CheckResult(_coreSystem.getFileUsage(out long sampleBytesRead, out long streamBytesRead, out long otherBytesRead));
+            performanceData["file.sample_bytes_read"] = sampleBytesRead;
+            performanceData["file.stream_bytes_read"] = streamBytesRead;
+            performanceData["file.other_bytes_read"] = otherBytesRead;
+        }
+        catch (Exception ex)
+        {
+            GD.PushError($"FMOD PerformanceData Error: {ex.Message}");
+        }
+        GD.Print("-- FMOD Performance Data --");
+        foreach (var kv in performanceData.OrderBy(k => k.Key))
+        {
+            string valueStr;
+
+            if (kv.Key.StartsWith("CPU."))
+                valueStr = $"{kv.Value * 100:N4}%";
+            else if (kv.Key.StartsWith("memory.") || kv.Key.StartsWith("file."))
+                valueStr = $"{kv.Value / 1024 / 1024:N2} MB";
+            else
+                valueStr = $"{kv.Value:N2}";
+
+            GD.Print($"| {kv.Key,-30} | {valueStr,15} |");
+        }
+        GD.Print("---------------------------");
+    }
+
+    
     /// <summary>
     /// Disposes of the FMOD system and resources.
     /// </summary>
@@ -390,6 +532,7 @@ public static class FmodServer
         {
             _currentBgm.stop(STOP_MODE.IMMEDIATE);
             _currentBgm.release();
+            _currentBgm.clearHandle();
         }
 
         if (_stringsBank.isValid())
