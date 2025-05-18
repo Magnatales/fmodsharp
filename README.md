@@ -8,7 +8,7 @@ Event UI based on [this integration](https://github.com/utopia-rise/fmod-gdexten
 
 | Issue                  | Description                                           | Workaround  |
 |------------------------|-------------------------------------------------------|-------------|
-| Single bank only        | Currently only supports one FMOD bank.                | Give me some time.    |
+| Single bank only        | Only build metadata and assets to a single bank is supported.                | Give me some time.    |
 | Parameters not filled | Parameters aren't filled in the editor view | Give me some time. |
 
 ---
