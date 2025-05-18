@@ -1,16 +1,16 @@
 [gd_scene load_steps=7 format=3 uid="uid://bn7a8mpmmsn1t"]
 
-[ext_resource type="Script" uid="uid://cnkldxy14cmfq" path="res://Example.cs" id="1_qu7h0"]
-[ext_resource type="PackedScene" uid="uid://bflv8elstveym" path="res://addons/fmodsharp/Scenes/FmodDebugger.tscn" id="2_nasd0"]
-[ext_resource type="Script" uid="uid://clan5yhads8rv" path="res://addons/fmodsharp/Scripts/Nodes/FmodEventEmitter.cs" id="3_dx165"]
-[ext_resource type="Script" uid="uid://b0s7n2wlu2stw" path="res://Movement.cs" id="4_b2mdi"]
-[ext_resource type="Texture2D" uid="uid://bfr5rsrxciq5j" path="res://icon.svg" id="5_8qexs"]
-[ext_resource type="Script" uid="uid://cf08cytwitgum" path="res://addons/fmodsharp/Scripts/Nodes/FmodListener.cs" id="6_70r2n"]
+[ext_resource type="Script" uid="uid://cnkldxy14cmfq" path="res://Examples.cs" id="1_vj526"]
+[ext_resource type="PackedScene" uid="uid://bflv8elstveym" path="res://addons/fmodsharp/Scenes/FmodDebugger.tscn" id="2_ysbuc"]
+[ext_resource type="Script" uid="uid://clan5yhads8rv" path="res://addons/fmodsharp/Scripts/Nodes/FmodEventEmitter.cs" id="3_0lcbx"]
+[ext_resource type="Script" uid="uid://b0s7n2wlu2stw" path="res://Movement.cs" id="4_7smkv"]
+[ext_resource type="Texture2D" uid="uid://bfr5rsrxciq5j" path="res://icon.svg" id="5_8un6t"]
+[ext_resource type="Script" uid="uid://cf08cytwitgum" path="res://addons/fmodsharp/Scripts/Nodes/FmodListener.cs" id="6_djavb"]
 
 [node name="Fmod" type="Node2D"]
-script = ExtResource("1_qu7h0")
+script = ExtResource("1_vj526")
 
-[node name="FmodDebugger" parent="." instance=ExtResource("2_nasd0")]
+[node name="FmodDebugger" parent="." instance=ExtResource("2_ysbuc")]
 
 [node name="ColorRect" type="ColorRect" parent="."]
 anchors_preset = 15
@@ -28,15 +28,15 @@ color = Color(0.192157, 0.180392, 0.298039, 1)
 
 [node name="FmodEventEmitter" type="Node2D" parent="."]
 position = Vector2(315, 232)
-script = ExtResource("3_dx165")
+script = ExtResource("3_0lcbx")
 _eventPathOrGuid = "{426d2e95-a1af-4065-8d20-d5add94e48bd}"
 metadata/_custom_type_script = "uid://clan5yhads8rv"
 
 [node name="Node2D" type="Node2D" parent="."]
-script = ExtResource("4_b2mdi")
+script = ExtResource("4_7smkv")
 
 [node name="Sprite2D" type="Sprite2D" parent="Node2D"]
-texture = ExtResource("5_8qexs")
+texture = ExtResource("5_8un6t")
 
 [node name="Camera2D" type="Camera2D" parent="Node2D"]
 position_smoothing_enabled = true
@@ -44,6 +44,6 @@ position_smoothing_speed = 2.0
 
 [node name="FmodListener" type="Node2D" parent="Node2D"]
 position = Vector2(86, 78)
-script = ExtResource("6_70r2n")
+script = ExtResource("6_djavb")
 _debug = true
 metadata/_custom_type_script = "uid://cf08cytwitgum"
