@@ -56,7 +56,8 @@ public partial class Example : Node2D
         FmodServer.Update();
     }
     
-    FMOD.RESULT MyMethod(EVENT_CALLBACK_TYPE type, IntPtr ptr, IntPtr _)
+    [MonoPInvokeCallback(typeof(FMOD.Studio.EVENT_CALLBACK))]
+    private static FMOD.RESULT MyMethod(EVENT_CALLBACK_TYPE type, IntPtr ptr, IntPtr _)
     {
         GD.Print("Event callback: " + type);
         GD.Print("Pointer: " + ptr);
