@@ -35,6 +35,36 @@ Once you build your banks in FMOD, in Godot, use the FMODSharp panel window at t
 
 ![image](https://github.com/user-attachments/assets/2d3e2517-f4c4-4851-89a3-3386357c0198)
 
+# General Tips
+Always cache your callbacks, not caching a callback may lead to a crash when doing `instance.setCallback(Method);`.
+For AOT compilers, make the callbacks static if possible and use the `MonoPInvokeCallbackAttribute` attribute
+```cs
+public partial class Example : Node2D
+{
+    private EVENT_CALLBACK _cachedCallback;
+    
+    public override void _Ready()
+    {
+        FmodServer.Initialize();
+        _cachedCallback = MyMethod;
+        var instance = FmodServer.Play(new Guid("my-guid"));
+        instance.setCallback(_cachedCallback);
+    }
+
+    public override void _Process(double delta)
+    {
+        FmodServer.Update();
+    }
+    
+    FMOD.RESULT MyMethod(EVENT_CALLBACK_TYPE type, IntPtr ptr, IntPtr _)
+    {
+        GD.Print("Event callback: " + type);
+        GD.Print("Pointer: " + ptr);
+        return FMOD.RESULT.OK;
+    }
+}
+```
+
 # FmodServer Class Documentation
 
 ## Overview
