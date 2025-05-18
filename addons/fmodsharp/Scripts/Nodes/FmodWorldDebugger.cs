@@ -26,7 +26,8 @@ public partial class FmodWorldDebugger : Node2D
         for (var index = FmodServer.DebugSoundInstances.Count - 1; index >= 0; index--)
         {
             var sound = FmodServer.DebugSoundInstances[index];
-            var pos = sound.position;
+            var pos = ToLocal(sound.position);
+            //pos = pos.Round();
             var text = sound.path;
             var textSize = font.GetStringSize(text);
             var textOffset = textSize / 2;
@@ -73,7 +74,7 @@ public partial class FmodWorldDebugger : Node2D
 
         foreach (var listener in FmodListener.Listeners)
         {
-            var pos = listener.GlobalPosition;
+            var pos = ToLocal(listener.GlobalPosition);
             
             Vector2 up = new Vector2(0, -22);
             Vector2 left = new Vector2(-18, 0);
