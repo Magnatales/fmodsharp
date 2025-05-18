@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://bo68kyi2p7qkd"]
 
-[ext_resource type="Script" uid="uid://cnkldxy14cmfq" path="res://Examples.cs" id="1_vj526"]
+[ext_resource type="Script" uid="uid://cnkldxy14cmfq" path="res://Examples/Examples.cs" id="1_vj526"]
 [ext_resource type="PackedScene" uid="uid://bflv8elstveym" path="res://addons/fmodsharp/Scenes/FmodDebugger.tscn" id="2_ysbuc"]
 [ext_resource type="Script" uid="uid://clan5yhads8rv" path="res://addons/fmodsharp/Scripts/Nodes/FmodEventEmitter.cs" id="3_0lcbx"]
 [ext_resource type="Script" uid="uid://cf08cytwitgum" path="res://addons/fmodsharp/Scripts/Nodes/FmodListener.cs" id="6_djavb"]
