@@ -25,7 +25,7 @@ public partial class Examples : Node2D
         //         GD.Randf() * screenSize.X,
         //         GD.Randf() * screenSize.Y
         //     );
-        //     var instance = FmodServer.Play(new Guid("{2242f7d2-3a92-446e-80fc-9b44ce74c285}"), randomPos);
+        //     var instance = FmodServer.Play(new Guid("{your-guid-goes-here}"), randomPos);
         //     instance.setCallback(_cachedCallback);
         // }
         //
