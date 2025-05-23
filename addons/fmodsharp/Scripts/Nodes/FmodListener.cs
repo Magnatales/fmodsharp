@@ -6,8 +6,6 @@ using Audio.FmodSharp;
 [GlobalClass]
 public partial class FmodListener : Node2D
 {
-    [Export] private bool _debug;
-    
     public static List<FmodListener> Listeners = new();
     
     private int _listenerIndex;   

@@ -29,7 +29,6 @@ public static class FmodServer
     private static EventInstance _currentBgm;
     
     private static bool _isInitialized;
-    private static Action _onInitialized;
     private static bool _isDebug;
     public static readonly List<DebugSoundInstance> DebugSoundInstances = new();
 
@@ -97,7 +96,6 @@ public static class FmodServer
         var stringsData = FileAccess.GetFileAsBytes(_cache.StringsBankPath);
         CheckResult(_system.loadBankMemory(stringsData, LOAD_BANK_FLAGS.NORMAL, out _stringsBank));
         _isInitialized = true;
-        _onInitialized?.Invoke();
     }
     
     /// <summary>

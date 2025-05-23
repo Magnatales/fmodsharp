@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://dfvfrwuikrqwj"]
+
+[ext_resource type="Script" uid="uid://clan5yhads8rv" path="res://addons/fmodsharp/Scripts/Nodes/FmodEventEmitter.cs" id="1_njov2"]
+[ext_resource type="Script" uid="uid://cf08cytwitgum" path="res://addons/fmodsharp/Scripts/Nodes/FmodListener.cs" id="2_2au82"]
+
+[node name="Test" type="Node2D"]
+
+[node name="FmodEventEmitter" type="Node2D" parent="."]
+position = Vector2(361, 292)
+script = ExtResource("1_njov2")
+_eventPathOrGuid = "{426d2e95-a1af-4065-8d20-d5add94e48bd}"
+metadata/_custom_type_script = "uid://clan5yhads8rv"
+
+[node name="FmodListener" type="Node2D" parent="."]
+position = Vector2(412, 287)
+script = ExtResource("2_2au82")
+_debug = true
+metadata/_custom_type_script = "uid://cf08cytwitgum"

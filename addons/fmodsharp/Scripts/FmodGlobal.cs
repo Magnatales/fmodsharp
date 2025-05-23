@@ -6,6 +6,14 @@ public partial class FmodGlobal : Node
     public override void _EnterTree()
     {
         FmodServer.Initialize();
+        
+        var cache = ResourceLoader.Load<FmodSharpCache>("uid://c0qeurhxncbgw");
+        if (cache.Debug)
+        {
+            var scene = ResourceLoader.Load<PackedScene>("uid://bflv8elstveym");
+            var debug = scene.Instantiate();
+            AddChild(debug);
+        }
     }
 
     public override void _Process(double delta)
