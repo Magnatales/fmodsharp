@@ -41,6 +41,8 @@ By default, the FmodGlobal.cs mutes the main bus when the game loses focus. Let 
 
 Enable debug mode to display any sound/music at the top left and visually see your listeners and 3D sounds in the scene
 ![image](https://github.com/user-attachments/assets/13e5b84c-b33e-4f8d-a679-c762b859b94c)
+![image](https://github.com/user-attachments/assets/9e5d15d2-e56e-45ad-b99f-6146a65b7bb7)
+
 
 # General Tips
 Always cache your callbacks, not caching a callback may lead to a crash when doing `instance.setCallback(Method);`.
