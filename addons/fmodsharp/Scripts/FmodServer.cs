@@ -91,12 +91,10 @@ public static class FmodServer
         CheckResult(_system.getCoreSystem(out _coreSystem));
         _coreSystem.set3DSettings(1.0f, 1.0f, 0.01f);
         
-        var bankPath = ProjectSettings.GlobalizePath(_cache.BankPath);
-        var bankData = FileAccess.GetFileAsBytes(bankPath);
+        var bankData = FileAccess.GetFileAsBytes(_cache.BankPath);
         CheckResult(_system.loadBankMemory(bankData, LOAD_BANK_FLAGS.NORMAL, out _bank));
         
-        var stringsPath = ProjectSettings.GlobalizePath(_cache.StringsBankPath);
-        var stringsData = FileAccess.GetFileAsBytes(stringsPath);
+        var stringsData = FileAccess.GetFileAsBytes(_cache.StringsBankPath);
         CheckResult(_system.loadBankMemory(stringsData, LOAD_BANK_FLAGS.NORMAL, out _stringsBank));
         _isInitialized = true;
         _onInitialized?.Invoke();
