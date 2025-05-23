@@ -440,7 +440,7 @@ public static class FmodServer
     {
         if (_isInitialized) return true;
         
-        GD.PrintErr($"{nameof(FmodServer)}: Not initialized. \n1. Fetch your banks through the FmodSharp panel at the bottom.\n2. Call FmodServer.Initialize() \n3. Call FmodServer.Update() in your _Process(double delta) \n4. Enjoy!");
+        GD.PrintErr($"{nameof(FmodServer)}: Not initialized. \n1. Fetch your banks through the FmodSharp panel at the bottom.\n2. Add FmodGlobal.cs to your globals \n3. Enjoy!");
         return false;
     }
 
