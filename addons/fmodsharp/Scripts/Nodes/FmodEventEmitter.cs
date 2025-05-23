@@ -14,7 +14,7 @@ public partial class FmodEventEmitter : Node2D
     {
         if (_playOnReady)
         {
-            FmodServer.OnInitialize(Play);
+            Play();
         }
     }
 

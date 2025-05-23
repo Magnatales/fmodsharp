@@ -99,21 +99,6 @@ public static class FmodServer
         _isInitialized = true;
         _onInitialized?.Invoke();
     }
-
-    /// <summary>
-    /// Registers a callback to be called when the FMOD system is initialized.
-    /// </summary>
-    public static void OnInitialize(Action onInitialized)
-    {
-        if (_isInitialized)
-        {
-            onInitialized?.Invoke();
-        }
-        else
-        {
-            _onInitialized += onInitialized;
-        }
-    }
     
     /// <summary>
     /// Updates the FMOD system. Should be called in the _Process function.
