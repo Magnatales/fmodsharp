@@ -32,15 +32,13 @@ In FMOD, you must select the build path to a desired path inside Godot. I recomm
 ![image](https://github.com/user-attachments/assets/1337d7cf-517d-48b6-9227-83c005ec7a22)
 
 Once you build your banks in FMOD, in Godot, use the FMODSharp panel window at the bottom to select the folder and fetch the banks
-
-![image](https://github.com/user-attachments/assets/2d3e2517-f4c4-4851-89a3-3386357c0198)
+![image](https://github.com/user-attachments/assets/9932c615-f73b-4fbb-8cfd-d22f914edaed)
 
 Add FmodGlobal.cs to your globals 
 ![image](https://github.com/user-attachments/assets/4a6382e0-a67f-4825-b883-87db7e0c72d5)
 By default, the FmodGlobal.cs mutes the main bus when the game loses focus. Let me know if you want more behaviors.
 
-Enable debug mode to display any sound/music at the top left and visually see your listeners and 3D sounds in the scene
-![image](https://github.com/user-attachments/assets/13e5b84c-b33e-4f8d-a679-c762b859b94c)
+Enable **debug** to display any sound/music at the top left and visually see your listeners and 3D sounds in the scene
 ![image](https://github.com/user-attachments/assets/9e5d15d2-e56e-45ad-b99f-6146a65b7bb7)
 
 
