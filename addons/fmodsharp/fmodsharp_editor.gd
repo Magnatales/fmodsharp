@@ -39,7 +39,7 @@ func _enter_tree():
 	dock_view.CopyPathButton.pressed.connect(_copy_path)
 
 	dock_view.AutoFetchOnFocus.pressed.connect(func():
-		EditorInterface.get_editor_settings().set_setting(AUTO_FETCH_KEY, dock_view.AutoFetchOnFocus.pressed)
+		EditorInterface.get_editor_settings().set_setting(AUTO_FETCH_KEY, dock_view.AutoFetchOnFocus.button_pressed)
 	)
 	dock_view.Debug.pressed.connect(func():
 		var cache = ResourceLoader.load("uid://c0qeurhxncbgw")
@@ -48,8 +48,17 @@ func _enter_tree():
 		ResourceSaver.save(cache)
 	)
 
-	dock_view.AutoFetchOnFocus.button_pressed = EditorInterface.get_editor_settings().get_setting(AUTO_FETCH_KEY)
-	dock_view.Debug.button_pressed = EditorInterface.get_editor_settings().get_setting(DEBUG_KEY)
+	var auto_fetch = EditorInterface.get_editor_settings().get_setting(AUTO_FETCH_KEY)
+	if auto_fetch == null:
+		auto_fetch = false
+		
+	print(auto_fetch)
+	dock_view.AutoFetchOnFocus.set_pressed_no_signal(auto_fetch)
+	
+	var debug_pressed = EditorInterface.get_editor_settings().get_setting(DEBUG_KEY)
+	if debug_pressed == null:
+		debug_pressed = false
+	dock_view.Debug.button_pressed(debug_pressed)
 
 
 	var cache = preload("uid://c0qeurhxncbgw")
