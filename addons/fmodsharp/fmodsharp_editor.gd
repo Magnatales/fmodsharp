@@ -58,7 +58,7 @@ func _enter_tree():
 	var debug_pressed = EditorInterface.get_editor_settings().get_setting(DEBUG_KEY)
 	if debug_pressed == null:
 		debug_pressed = false
-	dock_view.Debug.button_pressed(debug_pressed)
+	dock_view.Debug.set_pressed_no_signal(debug_pressed)
 
 
 	var cache = preload("uid://c0qeurhxncbgw")
