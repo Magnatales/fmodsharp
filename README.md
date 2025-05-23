@@ -37,7 +37,10 @@ Once you build your banks in FMOD, in Godot, use the FMODSharp panel window at t
 
 Add FmodGlobal.cs to your globals 
 ![image](https://github.com/user-attachments/assets/4a6382e0-a67f-4825-b883-87db7e0c72d5)
+By default, the FmodGlobal.cs mutes the main bus when the game loses focus. Let me know if you want more behaviors.
 
+Enable debug mode to display any sound/music at the top left and visually see your listeners and 3D sounds in the scene
+![image](https://github.com/user-attachments/assets/13e5b84c-b33e-4f8d-a679-c762b859b94c)
 
 # General Tips
 Always cache your callbacks, not caching a callback may lead to a crash when doing `instance.setCallback(Method);`.
